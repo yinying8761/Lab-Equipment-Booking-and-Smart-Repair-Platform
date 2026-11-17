@@ -1,0 +1,28 @@
+{
+  "generatedAt": "2026-11-09 11:26:44",
+  "scenario": "AI 服务停止后系统降级行为",
+  "total": 4,
+  "passed": 4,
+  "results": [
+    {
+      "case": "AT-11a",
+      "passed": true,
+      "detail": "HTTP 503：AI 服务暂不可用，请稍后重试或使用手动报修"
+    },
+    {
+      "case": "AT-11b",
+      "passed": true,
+      "detail": "HTTP 503：AI 服务暂不可用，请稍后重试或使用手动报修"
+    },
+    {
+      "case": "AT-11c",
+      "passed": true,
+      "detail": "设备查询仍可用，命中 1 台"
+    },
+    {
+      "case": "AT-11d",
+      "passed": "RP202611091702",
+      "detail": "手动报修仍可用，工单号 RP202611091702"
+    }
+  ]
+}

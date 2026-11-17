@@ -1,0 +1,67 @@
+server:
+  port: ${LAB_SERVER_PORT:8080}
+  servlet:
+    context-path: /api
+    encoding:
+      charset: UTF-8
+      force: true
+
+spring:
+  application:
+    name: labcare-backend
+  datasource:
+    url: ${LAB_DB_URL:jdbc:mysql://127.0.0.1:3306/labcare?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true&useSSL=false}
+    username: ${LAB_DB_USERNAME:root}
+    password: ${LAB_DB_PASSWORD:}
+    hikari:
+      maximum-pool-size: 10
+      connection-timeout: 10000
+  jpa:
+    hibernate:
+      ddl-auto: none
+    open-in-view: false
+    properties:
+      hibernate:
+        jdbc:
+          time_zone: Asia/Shanghai
+          batch_size: 50
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 20MB
+  mvc:
+    throw-exception-if-no-handler-found: true
+  web:
+    resources:
+      add-mappings: false
+
+labcare:
+  jwt:
+    # 生产环境务必通过环境变量覆盖；仓库中只保留默认占位值
+    secret: ${LAB_JWT_SECRET:labcare-course-design-default-jwt-secret-2026}
+    expire-hours: 12
+  ai:
+    base-url: ${LAB_AI_BASE_URL:http://127.0.0.1:8100}
+    connect-timeout-seconds: 5
+    read-timeout-seconds: 90
+    # 服务间令牌：AI 服务调用 /internal/tools/** 时必须携带
+    internal-token: ${LAB_INTERNAL_TOKEN:labcare-internal-token-2026}
+  cors:
+    allowed-origins: ${LAB_CORS_ORIGINS:http://localhost:5173,http://127.0.0.1:5173}
+  storage:
+    knowledge-dir: ${LAB_KNOWLEDGE_DIR:./data/知识库}
+  reservation:
+    slot-minutes: 30
+    min-advance-minutes: 30
+    max-advance-days: 7
+    max-duration-hours: 4
+  agent:
+    confirm-timeout-minutes: 10
+
+logging:
+  level:
+    root: INFO
+    com.labcare: INFO
+    org.hibernate.SQL: WARN
+  pattern:
+    console: "%d{HH:mm:ss.SSS} %-5level [%thread] %logger{36} - %msg%n"

@@ -1,0 +1,89 @@
+{
+  "generatedAt": "2026/11/9 11:43:29",
+  "base": "http://127.0.0.1:5173",
+  "total": 16,
+  "passed": 16,
+  "consoleErrors": [],
+  "results": [
+    {
+      "name": "登录页渲染",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "学生登录并进入工作台",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "设备列表加载",
+      "passed": true,
+      "detail": "行数=10"
+    },
+    {
+      "name": "设备详情抽屉",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "我的预约列表",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "RAG 问答返回引用",
+      "passed": true,
+      "detail": "引用=3 条"
+    },
+    {
+      "name": "RAG 证据不足提示",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "Agent 生成待确认预览",
+      "passed": true,
+      "detail": "拟为「EQ-002 台式扫描电子显微镜」创建报修工单，故障描述：EQ-002 电"
+    },
+    {
+      "name": "Agent 工具轨迹可见",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "取消确认未建单",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "确认后创建真实工单",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "我的报修列表可查 Agent 工单",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "管理员预约审核页",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "管理员工单处理页",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "管理员知识库页",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "管理员设备管理页",
+      "passed": true,
+      "detail": ""
+    }
+  ]
+}

@@ -1,0 +1,38 @@
+{
+  "group": "第 11 组",
+  "systemName": "实验室设备预约与智能报修平台",
+  "className": "【班级】",
+  "leader": "郑颖浩",
+  "members": [
+    {
+      "name": "郑颖浩",
+      "studentId": "【学号】",
+      "role": "组长",
+      "module": "项目统筹、RAG/Agent 与测试证据",
+      "achievement": "项目统筹与答辩材料；RAG 管道（解析切分、哈希向量、BM25 重排、引用溯源、证据不足拒答、降级模式）、Agent 工具编排与待确认提案、智能助手与工作台页面、AI 链路自动化测试与验收证据",
+      "location": "src/ai-service/app/**（rag、agent）；src/frontend/src/views/AiAssistant.vue、Dashboard.vue；tests/；evidence/",
+      "weight": "32%",
+      "pptBrief": "切分与混合检索、引用与拒答、工具编排与待确认提案、AI 测试与证据、项目统筹"
+    },
+    {
+      "name": "常辰",
+      "studentId": "【学号】",
+      "role": "组员",
+      "module": "报修工单、知识库与用户端页面",
+      "achievement": "报修状态机与处理轨迹、操作日志留痕、知识库上传/解析/索引/删除、用户端设备/预约/报修页面、工单处理与知识库管理页",
+      "location": "src/backend/**（repair、knowledge）；src/frontend/src/views/EquipmentList.vue、MyReservations.vue、MyRepairs.vue、admin/AdminRepairs.vue、admin/AdminKnowledge.vue",
+      "weight": "33%",
+      "pptBrief": "工单状态机与处理轨迹、知识库上传与索引重建、用户端页面与工单/知识库管理页"
+    },
+    {
+      "name": "赵佳伟",
+      "studentId": "【学号】",
+      "role": "组员",
+      "module": "Java 后端、数据库与设备/预约主链路",
+      "achievement": "数据库设计（11 张表与索引）、JWT 鉴权与权限拦截、统一响应与全局异常、设备台账、预约时间规则与冲突控制（设备行锁）、登录页与设备管理/预约审核页、三服务集成部署",
+      "location": "src/backend/**（auth、security、equipment、reservation、common、config）；src/frontend/src/views/Login.vue、admin/AdminEquipment.vue、admin/AdminReservations.vue；db/init.sql；scripts/",
+      "weight": "35%",
+      "pptBrief": "11 张表与索引、JWT 鉴权与权限拦截、冲突控制与行锁、登录页与两个管理页、部署联调"
+    }
+  ]
+}
