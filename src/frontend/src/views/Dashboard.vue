@@ -11,25 +11,9 @@
     </div>
 
     <div class="stat-grid">
-      <div class="stat-card">
-        <div class="label">设备总数</div>
-        <div class="value">{{ stats.equipmentTotal ?? '-' }}</div>
-      </div>
-      <div class="stat-card">
-        <div class="label">待审核预约</div>
-        <div class="value">{{ stats.reservationPending ?? '-' }}</div>
-      </div>
-      <div class="stat-card">
-        <div class="label">已通过预约</div>
-        <div class="value">{{ stats.reservationApproved ?? '-' }}</div>
-      </div>
-      <div class="stat-card">
-        <div class="label">待受理工单</div>
-        <div class="value">{{ stats.repairPending ?? '-' }}</div>
-      </div>
-      <div class="stat-card">
-        <div class="label">处理中工单</div>
-        <div class="value">{{ stats.repairProcessing ?? '-' }}</div>
+      <div v-for="card in statCards" :key="card.label" class="stat-card">
+        <div class="label">{{ card.label }}</div>
+        <div class="value">{{ card.value ?? '-' }}</div>
       </div>
     </div>
 
@@ -61,7 +45,7 @@
 </template>
 
 <script setup>
-import { onMounted, reactive, ref } from 'vue'
+import { computed, onMounted, reactive, ref } from 'vue'
 import { aiApi, statsApi } from '../api'
 import { useAuthStore } from '../stores/auth'
 
@@ -69,6 +53,21 @@ const auth = useAuthStore()
 const stats = reactive({})
 const aiAvailable = ref(false)
 const aiDegraded = ref(false)
+
+const statCards = computed(() => auth.isAdmin
+  ? [
+      { label: '设备总数', value: stats.equipmentTotal },
+      { label: '待审核预约', value: stats.reservationPending },
+      { label: '已通过预约', value: stats.reservationApproved },
+      { label: '待受理工单', value: stats.repairPending },
+      { label: '处理中工单', value: stats.repairProcessing }
+    ]
+  : [
+      { label: '我的待审核预约', value: stats.myReservationPending },
+      { label: '我的已通过预约', value: stats.myReservationApproved },
+      { label: '我的待受理工单', value: stats.myRepairPending },
+      { label: '我的处理中工单', value: stats.myRepairProcessing }
+    ])
 
 const quickLinks = [
   { title: '设备台账', desc: '查询设备状态与使用说明', path: '/equipments', icon: 'Box' },
@@ -79,7 +78,7 @@ const quickLinks = [
 
 onMounted(async () => {
   try {
-    const res = await statsApi.overview()
+    const res = auth.isAdmin ? await statsApi.overview() : await statsApi.myOverview()
     Object.assign(stats, res.data)
   } catch (e) {
     /* 已由拦截器提示 */

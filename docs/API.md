@@ -40,6 +40,7 @@ curl -X POST http://127.0.0.1:8080/api/auth/login \
 | 方法 | 路径 | 请求体 / 参数 | 说明 |
 | --- | --- | --- | --- |
 | POST | `/reservations` | `{equipmentId, startTime, endTime, purpose}` | 提交预约，返回 `code`、`status` |
+| GET | `/reservations/equipment/{equipmentId}/reserved-time` | start, end（`yyyy-MM-dd HH:mm:ss`，范围 ≤ 31 天） | 该设备在区间内已占用（仅 APPROVED）的时段，升序 |
 | GET | `/reservations/mine` | status, page, size | 本人预约 |
 | GET | `/reservations/{id}` | — | 详情（本人或管理员） |
 | POST | `/reservations/{id}/cancel` | — | 取消本人待审核预约 |
@@ -112,4 +113,5 @@ curl -X POST http://127.0.0.1:8080/api/auth/login \
 | 方法 | 路径 | 说明 |
 | --- | --- | --- |
 | GET | `/health` | 后端健康检查 |
-| GET | `/stats/overview` | 工作台统计（设备数、待审核预约、待受理工单等） |
+| GET | `/stats/overview` | 管理员全局大盘（设备数、全部待审核/已通过预约、全部待受理/处理中工单），仅 ADMIN |
+| GET | `/stats/my-overview` | 当前登录用户个人工作台统计（我的预约与工单计数） |

@@ -167,6 +167,27 @@ public class ReservationService {
         return toView(reservation);
     }
 
+    /**
+     * 查询某设备在指定时间范围内已被占用的时段。
+     * <p>
+     * 仅返回已通过（APPROVED）的预约：待审核申请尚未生效，不作为占用展示，避免误判。
+     */
+    @Transactional(readOnly = true)
+    public List<ReservationDtos.ReservedTimeView> reservedSlots(Long equipmentId, LocalDateTime start, LocalDateTime end) {
+        if (start == null || end == null || !start.isBefore(end)) {
+            throw BusinessException.badRequest("开始时间必须早于结束时间");
+        }
+        if (end.isAfter(start.plusDays(31))) {
+            throw BusinessException.badRequest("查询范围不能超过 31 天");
+        }
+        equipmentRepository.findById(equipmentId)
+                .orElseThrow(() -> BusinessException.notFound("设备不存在"));
+        return reservationRepository.findOccupiedInRange(equipmentId, ReservationStatus.APPROVED, start, end)
+                .stream()
+                .map(r -> new ReservationDtos.ReservedTimeView(r.getId(), r.getStartTime(), r.getEndTime()))
+                .toList();
+    }
+
     @Transactional(readOnly = true)
     public PageResult<ReservationDtos.ReservationView> mine(CurrentUser user, ReservationStatus status,
                                                             int page, int size) {

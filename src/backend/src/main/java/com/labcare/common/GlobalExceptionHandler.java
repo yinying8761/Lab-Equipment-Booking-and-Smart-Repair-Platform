@@ -11,6 +11,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import org.springframework.web.servlet.NoHandlerFoundException;
 
@@ -45,9 +46,13 @@ public class GlobalExceptionHandler {
         return ResponseEntity.badRequest().body(ApiResponse.fail(400, message));
     }
 
-    @ExceptionHandler({MissingServletRequestParameterException.class, IllegalArgumentException.class})
+    @ExceptionHandler({MissingServletRequestParameterException.class,
+            MethodArgumentTypeMismatchException.class, IllegalArgumentException.class})
     public ResponseEntity<ApiResponse<Void>> handleBadRequest(Exception ex) {
-        return ResponseEntity.badRequest().body(ApiResponse.fail(400, ex.getMessage()));
+        String message = ex instanceof MethodArgumentTypeMismatchException
+                ? "请求参数格式不正确，请检查时间或状态等参数"
+                : ex.getMessage();
+        return ResponseEntity.badRequest().body(ApiResponse.fail(400, message));
     }
 
     @ExceptionHandler(MaxUploadSizeExceededException.class)

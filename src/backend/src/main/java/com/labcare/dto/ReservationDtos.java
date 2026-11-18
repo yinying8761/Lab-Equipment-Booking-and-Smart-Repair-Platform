@@ -33,4 +33,8 @@ public final class ReservationDtos {
                                   String reviewerName, String reviewComment, LocalDateTime reviewedAt,
                                   LocalDateTime createdAt) {
     }
+
+    /** 预约日历展示：某设备在查询区间内已通过（占用）的时段。 */
+    public record ReservedTimeView(Long id, LocalDateTime startTime, LocalDateTime endTime) {
+    }
 }

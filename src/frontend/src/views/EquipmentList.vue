@@ -36,9 +36,10 @@
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="170" fixed="right">
+        <el-table-column label="操作" width="250" fixed="right">
           <template #default="{ row }">
             <el-button link type="primary" @click="openDetail(row)">详情</el-button>
+            <el-button link type="primary" :icon="Calendar" @click="openSlots(row)">占用时段</el-button>
             <el-button link type="primary" :disabled="row.status !== 'AVAILABLE'" @click="openReserve(row)">
               预约
             </el-button>
@@ -97,14 +98,57 @@
         <el-button type="primary" :loading="submitting" @click="submitReserve">提交预约</el-button>
       </template>
     </el-dialog>
+
+    <el-dialog v-model="slotsVisible" width="620px"
+               :title="`设备占用时段 · ${slotsEquipment.code || ''} ${slotsEquipment.name || ''}`">
+      <div class="slot-toolbar">
+        <el-date-picker v-model="slotsRange" type="daterange" range-separator="至"
+                        start-placeholder="开始日期" end-placeholder="结束日期"
+                        format="YYYY-MM-DD" :clearable="false" style="width: 280px" />
+        <el-button type="primary" :icon="Search" :loading="slotsLoading" @click="loadSlots">查询</el-button>
+      </div>
+
+      <div v-if="slotsQuery.startText" class="slot-summary">
+        查询区间 {{ slotsQuery.startText }} ~ {{ slotsQuery.endText }}，
+        共 {{ slots.length }} 个已被预约的时段
+      </div>
+
+      <div v-loading="slotsLoading" class="slot-body">
+        <div v-for="group in groupedSlots" :key="group.date" class="slot-day">
+          <div class="slot-day-title">
+            <span>{{ group.date }}</span>
+            <span class="slot-day-count">{{ group.items.length }} 段占用</span>
+          </div>
+          <div class="slot-chips">
+            <el-tag v-for="item in group.items" :key="item.id" type="danger" effect="light">
+              {{ slotLabel(item) }}
+            </el-tag>
+          </div>
+        </div>
+        <el-empty v-if="!slotsLoading && !slots.length"
+                  description="该时间范围内暂无已被预约的时段，可放心选择" :image-size="80" />
+      </div>
+
+      <div class="slot-hint">
+        <el-icon><InfoFilled /></el-icon>
+        <span>仅展示「已审核通过」的预约；待审核申请不占用时段。请避开上述时间段提交预约。</span>
+      </div>
+
+      <template #footer>
+        <el-button @click="slotsVisible = false">关闭</el-button>
+        <el-button type="primary" :disabled="slotsEquipment.status !== 'AVAILABLE'" @click="reserveFromSlots">
+          预约该设备
+        </el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
 <script setup>
-import { onMounted, reactive, ref } from 'vue'
+import { computed, onMounted, reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { Search, Refresh } from '@element-plus/icons-vue'
+import { Search, Refresh, Calendar, InfoFilled } from '@element-plus/icons-vue'
 import { equipmentApi, reservationApi } from '../api'
 import { equipmentStatusType } from '../utils/format'
 
@@ -128,6 +172,23 @@ const reserveRules = {
   range: [{ required: true, message: '请选择预约时段', trigger: 'change' }],
   purpose: [{ required: true, message: '请填写用途', trigger: 'blur' }]
 }
+
+const slotsVisible = ref(false)
+const slotsLoading = ref(false)
+const slotsEquipment = ref({})
+const slotsRange = ref([])
+const slots = ref([])
+const slotsQuery = reactive({ startText: '', endText: '' })
+
+const groupedSlots = computed(() => {
+  const map = new Map()
+  for (const item of slots.value) {
+    const day = String(item.startTime).slice(0, 10)
+    if (!map.has(day)) map.set(day, [])
+    map.get(day).push(item)
+  }
+  return [...map.entries()].map(([date, items]) => ({ date, items }))
+})
 
 function disabledDate(date) {
   const today = new Date()
@@ -167,6 +228,58 @@ function openReserve(row) {
   reserveForm.range = []
   reserveForm.purpose = ''
   reserveVisible.value = true
+}
+
+function dayText(date) {
+  const pad = (n) => String(n).padStart(2, '0')
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`
+}
+
+function openSlots(row) {
+  slotsEquipment.value = row
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  const weekLater = new Date(today)
+  weekLater.setDate(weekLater.getDate() + 7)
+  slotsRange.value = [today, weekLater]
+  slots.value = []
+  slotsQuery.startText = ''
+  slotsQuery.endText = ''
+  slotsVisible.value = true
+  loadSlots()
+}
+
+async function loadSlots() {
+  if (!slotsRange.value || slotsRange.value.length !== 2) {
+    ElMessage.warning('请选择查询日期范围')
+    return
+  }
+  slotsQuery.startText = dayText(slotsRange.value[0])
+  slotsQuery.endText = dayText(slotsRange.value[1])
+  slotsLoading.value = true
+  try {
+    const res = await reservationApi.reservedTime(slotsEquipment.value.id, {
+      start: `${slotsQuery.startText} 00:00:00`,
+      end: `${slotsQuery.endText} 23:59:59`
+    })
+    slots.value = res.data || []
+  } finally {
+    slotsLoading.value = false
+  }
+}
+
+function slotLabel(item) {
+  const start = String(item.startTime)
+  const end = String(item.endTime)
+  if (start.slice(0, 10) === end.slice(0, 10)) {
+    return `${start.slice(11, 16)} - ${end.slice(11, 16)}`
+  }
+  return `${start.slice(5, 16)} - ${end.slice(5, 16)}`
+}
+
+function reserveFromSlots() {
+  slotsVisible.value = false
+  openReserve(slotsEquipment.value)
 }
 
 function roundUp(date) {
@@ -234,5 +347,67 @@ onMounted(async () => {
   margin-top: 20px;
   display: flex;
   justify-content: flex-end;
+}
+
+.slot-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.slot-summary {
+  margin-top: 14px;
+  font-size: 13px;
+  color: var(--el-text-color-secondary);
+}
+
+.slot-body {
+  margin-top: 12px;
+  min-height: 120px;
+  max-height: 360px;
+  overflow-y: auto;
+}
+
+.slot-day {
+  padding: 10px 0;
+  border-bottom: 1px dashed var(--el-border-color-lighter);
+}
+
+.slot-day:last-child {
+  border-bottom: none;
+}
+
+.slot-day-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--el-text-color-primary);
+}
+
+.slot-day-count {
+  font-weight: 400;
+  color: var(--el-color-danger);
+}
+
+.slot-chips {
+  margin-top: 8px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.slot-hint {
+  margin-top: 12px;
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  padding: 10px 12px;
+  border-radius: 6px;
+  background: var(--el-fill-color-light);
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--el-text-color-secondary);
 }
 </style>

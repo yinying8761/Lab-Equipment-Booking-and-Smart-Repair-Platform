@@ -36,7 +36,25 @@ public interface ReservationRepository extends JpaRepository<Reservation, Long>,
                                     @Param("endTime") LocalDateTime endTime,
                                     @Param("excludeId") Long excludeId);
 
+    /**
+     * 查询某设备在 [start, end) 内已占用（指定状态，通常为 APPROVED）的预约，按开始时间升序。
+     */
+    @Query("""
+            select r from Reservation r
+             where r.equipmentId = :equipmentId
+               and r.status = :status
+               and r.startTime < :endTime
+               and r.endTime > :startTime
+             order by r.startTime asc
+            """)
+    List<Reservation> findOccupiedInRange(@Param("equipmentId") Long equipmentId,
+                                          @Param("status") ReservationStatus status,
+                                          @Param("startTime") LocalDateTime startTime,
+                                          @Param("endTime") LocalDateTime endTime);
+
     long countByStatus(ReservationStatus status);
+
+    long countByUserIdAndStatus(Long userId, ReservationStatus status);
 
     boolean existsByCode(String code);
 }

@@ -17,6 +17,8 @@ export const equipmentApi = {
 
 export const reservationApi = {
   create: (data) => http.post('/reservations', data),
+  reservedTime: (equipmentId, params) =>
+    http.get(`/reservations/equipment/${equipmentId}/reserved-time`, { params }),
   mine: (params) => http.get('/reservations/mine', { params }),
   detail: (id) => http.get(`/reservations/${id}`),
   cancel: (id) => http.post(`/reservations/${id}/cancel`),
@@ -57,5 +59,6 @@ export const aiApi = {
 }
 
 export const statsApi = {
-  overview: () => http.get('/stats/overview')
+  overview: () => http.get('/stats/overview'),
+  myOverview: () => http.get('/stats/my-overview')
 }
