@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026/11/9 11:43:29",
-  "base": "http://127.0.0.1:5173",
+  "generatedAt": "2026/11/19 17:44:18",
+  "base": "http://localhost:5173",
   "total": 16,
   "passed": 16,
   "consoleErrors": [],
@@ -43,7 +43,7 @@
     {
       "name": "Agent 生成待确认预览",
       "passed": true,
-      "detail": "拟为「EQ-002 台式扫描电子显微镜」创建报修工单，故障描述：EQ-002 电"
+      "detail": "拟为「EQ-002 台式扫描电子显微镜」创建报修工单，故障描述：真空度上不去（抽"
     },
     {
       "name": "Agent 工具轨迹可见",

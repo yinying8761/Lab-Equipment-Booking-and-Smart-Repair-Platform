@@ -104,16 +104,37 @@ echo [环境] Node / Python / MySQL 检查通过
 echo.
 
 rem ========== 5. 首次运行准备 ==========
+rem 需要重建的两种情况：jar 不存在，或后端源码/配置比 jar 新（避免改了代码却仍跑旧 jar）。
+set "NEED_BUILD="
 if not exist "src\backend\target\labcare-backend.jar" (
-    echo [准备] 未找到后端 jar，开始构建（首次约 1-2 分钟）...
+    set "NEED_BUILD=1"
+) else (
+    for %%J in ("src\backend\target\labcare-backend.jar") do set "JAR_TIME=%%~tJ"
+    for /f "delims=" %%F in ('dir /b /s /a-d "src\backend\src\main\java\*.java" "src\backend\src\main\resources\*.*" 2^>nul') do (
+        if not defined NEED_BUILD if "%%~tF" GTR "!JAR_TIME!" set "NEED_BUILD=1"
+    )
+    if exist "src\backend\pom.xml" if not defined NEED_BUILD (
+        for %%P in ("src\backend\pom.xml") do if "%%~tP" GTR "!JAR_TIME!" set "NEED_BUILD=1"
+    )
+)
+if defined NEED_BUILD (
+    echo [准备] 后端源码有更新或 jar 不存在，开始构建（约 1-2 分钟）...
     where mvn >nul 2>nul
     if errorlevel 1 (
         echo [错误] 未找到 Maven，无法自动构建。请安装 Maven 或在 IDEA 中打包后重试。
         pause
         exit /b 1
     )
+    rem 后端正在运行时 jar 会被占用，Maven 无法替换，必须先停服务。
+    netstat -ano | findstr ":8080 " | findstr "LISTENING" >nul 2>nul
+    if not errorlevel 1 (
+        echo [错误] 8080 端口仍在运行，后端 jar 被占用，无法重新构建。
+        echo        请先双击「停止服务.bat」，再运行本启动器。
+        pause
+        exit /b 1
+    )
     pushd "src\backend"
-    call mvn -B -q -DskipTests package
+    call mvn -B -q -DskipTests clean package
     if errorlevel 1 (
         echo [错误] 后端构建失败，请查看上方日志。
         popd

@@ -8,4 +8,9 @@ if (-not (Test-Path 'node_modules')) {
     npm install --registry=https://registry.npmmirror.com --no-audit --no-fund
 }
 
-npm run dev
+# npm 会把 "npm notice" 之类的正常运行提示写到 stderr，
+# 在 ErrorActionPreference='Stop' 下会被 PowerShell 当成终止性错误并结束进程，
+# 因此对本条命令临时放宽并显式合并输出。
+$ErrorActionPreference = 'Continue'
+npm run dev 2>&1 | ForEach-Object { Write-Host $_ }
+exit $LASTEXITCODE

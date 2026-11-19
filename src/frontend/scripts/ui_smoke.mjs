@@ -1,4 +1,4 @@
-﻿/**
+/**
  * 前端端到端 UI 冒烟 + 运行截图生成。
  *
  * 用法：
@@ -22,6 +22,8 @@ const CHROME = [
 ].find((p) => fs.existsSync(p))
 
 const BASE = process.env.LAB_FRONTEND || 'http://127.0.0.1:5173'
+// 直连后端用于准备测试数据（不经 Vite 代理，避免依赖前端进程状态）
+const API_BASE = process.env.LAB_BACKEND || 'http://127.0.0.1:8080'
 const results = []
 const consoleErrors = []
 
@@ -93,10 +95,79 @@ async function logout(page) {
   await sleep(600)
 }
 
+/**
+ * 预约审核页默认筛选「待审核」。若反复运行测试把待审核数据消耗完，
+ * 页面会正确地显示空状态，导致后续断言等不到表格行。
+ * 这里先通过接口补一条待审核预约，保证脚本可重复执行。
+ */
+async function seedPendingReservation() {
+  const api = `${API_BASE}/api`
+  const login = await fetch(`${api}/auth/login`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ username: 'student02', password: 'Student@123' })
+  }).then((r) => r.json())
+  const token = login?.data?.token
+  if (!token) throw new Error('预约数据准备失败：无法登录 student02')
+
+  const pad = (n) => String(n).padStart(2, '0')
+  const fmt = (d) =>
+    `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ` +
+    `${pad(d.getHours())}:${pad(d.getMinutes())}:00`
+
+  // 选一台可用设备，预约「3 天后」的一个时段，避开已有预约冲突
+  const equipments = await fetch(`${api}/equipments?status=AVAILABLE&page=1&size=50`, {
+    headers: { Authorization: `Bearer ${token}` }
+  }).then((r) => r.json())
+  const equipment = equipments?.data?.list?.find((e) => e.status === 'AVAILABLE')
+  if (!equipment) throw new Error('预约数据准备失败：没有可用设备')
+
+  const start = new Date()
+  start.setDate(start.getDate() + 3)
+  start.setHours(10, 0, 0, 0)
+  const end = new Date(start.getTime() + 60 * 60 * 1000)
+
+  const created = await fetch(`${api}/reservations`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+    body: JSON.stringify({
+      equipmentId: equipment.id,
+      startTime: fmt(start),
+      endTime: fmt(end),
+      purpose: 'UI 冒烟测试自动准备数据'
+    })
+  }).then((r) => r.json())
+
+  if (created?.code !== 0) {
+    // 时段被占用等可恢复情况：换一台设备再试一次
+    const other = equipments?.data?.list?.find((e) => e.id !== equipment.id && e.status === 'AVAILABLE')
+    if (!other) throw new Error(`预约数据准备失败：${created?.message || '未知原因'}`)
+    const retry = await fetch(`${api}/reservations`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify({
+        equipmentId: other.id,
+        startTime: fmt(start),
+        endTime: fmt(end),
+        purpose: 'UI 冒烟测试自动准备数据'
+      })
+    }).then((r) => r.json())
+    if (retry?.code !== 0) throw new Error(`预约数据准备失败：${retry?.message || '未知原因'}`)
+    return retry.data.code
+  }
+  return created.data.code
+}
+
 async function main() {
   if (!CHROME) throw new Error('未找到 Chrome 或 Edge')
   fs.mkdirSync(SHOT_DIR, { recursive: true })
   fs.mkdirSync(path.dirname(REPORT), { recursive: true })
+
+  const seeded = await seedPendingReservation().catch((err) => {
+    console.log(`[WARN] ${err.message}`)
+    return null
+  })
+  if (seeded) console.log(`[准备] 已补充待审核预约 ${seeded}`)
 
   const browser = await puppeteer.launch({
     executablePath: CHROME,

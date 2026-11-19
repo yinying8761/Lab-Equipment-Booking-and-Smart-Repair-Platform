@@ -5,6 +5,10 @@ target/
 *.log
 *.pid
 
+# Python 编译缓存
+__pycache__/
+*.pyc
+
 # 本地配置与密钥（严禁提交）
 config/local.env
 config/*.local.env
@@ -19,3 +23,6 @@ data/知识库/uploads/
 .idea/
 .vscode/
 *.iml
+
+# 文档处理临时目录
+docx-format/
